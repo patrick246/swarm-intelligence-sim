@@ -1,0 +1,23 @@
+{
+  "name": "swarm-intelligence-sim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patrick246/swarm-intelligence-sim.git"
+  },
+  "author": "patrick246, raspyweather",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/patrick246/swarm-intelligence-sim/issues"
+  },
+  "homepage": "https://github.com/patrick246/swarm-intelligence-sim#readme",
+  "dependencies": {
+    "matter-js": "^0.14.2",
+    "poly-decomp": "^0.3.0"
+  }
+}
