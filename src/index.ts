@@ -1,20 +1,26 @@
 
-import {Engine, Render, World, Bodies, Body, Vertices} from 'matter-js';
-import {Robot} from './robot';
+import { Engine, Render, World, Bodies, Body, Vertices } from 'matter-js';
+import { Robot } from './robot';
 
 import decomp from 'poly-decomp';
+import { RobotController } from './robotController';
+import { Environment } from './environment';
 (window as any).decomp = decomp;
 
-const engine = setupEngine();
-const render = setupRenderer();
 const robots: Robot[] = [];
 const balls: Body[] = [];
 
+const simulationEnvironment = initSimEnvironment();
 
 spawnRobots(10, 10, 500, 500, 5);
 createBalls(10, 10, 500, 500, 20);
 
-function setupRenderer() {
+function initSimEnvironment(): Environment {
+	const engine = setupEngine();
+	const render = setupRenderer(engine);
+	return { renderer: render, engine };
+}
+function setupRenderer(engine: Engine) :Render{
 	return Render.create({
 		element: document.body,
 		engine: engine,
@@ -30,28 +36,12 @@ function setupEngine() {
 	return engine;
 }
 
-function createRobot(x: number, y: number, rot: number) {
-	const bot = Vertices.fromPath('0 0 0 10 -10 20 -9 21 5 10 19 21 20 20 10 10 10 0', null);
-	const robot = new Robot(Bodies.fromVertices(x, y,
-		[bot], {
-			render: {
-				fillStyle: 'blue',
-				lineWidth: 1,// = bump width
-				strokeStyle: 'blue'
-			}
-		}, true));
-	Body.scale(robot.getBody(), 3, 3);
-	Body.rotate(robot.getBody(), rot);
-	robots.push(robot);
-	return robot;
-}
-
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y, rot] = [Math.random() * w + startX, Math.random() * h + startY, Math.random() * 360];
-		createRobot(x, y, rot);
+		robots.push(new Robot(new RobotController(x, y, rot, simulationEnvironment)));
 	}
-	robots.forEach(x=>x.moveForward());
+	robots.forEach(x => x.update());
 }
 
 function createBalls(startX: number, startY: number, h: number, w: number, count: number) {
@@ -63,13 +53,13 @@ function createBalls(startX: number, startY: number, h: number, w: number, count
 }
 
 
-World.add(engine.world, robots.map(r => r.getBody()));
 
-World.add(engine.world, balls);
+
+World.add(simulationEnvironment.engine.world, balls);
 
 (function run() {
 	window.requestAnimationFrame(run);
 
-	Engine.update(engine, 1000 / 60);
-	Render.world(render);
+	Engine.update(simulationEnvironment.engine, 1000 / 60);
+	Render.world(simulationEnvironment.renderer);
 })();

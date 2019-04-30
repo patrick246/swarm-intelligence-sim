@@ -1,19 +1,15 @@
-import {Body} from "matter-js";
+import { RobotController } from "./robotController";
 
 export class Robot {
-	constructor(private body: Body) {
+	constructor(private readonly controller: RobotController) {
+		{
 
+		}
 	}
 
 	update() {
-
+		this.controller.moveForward();
 	}
 
-	public getBody() {
-		return this.body;
-	}
 
-	public moveForward(){
-		Body.setVelocity(this.body, { x: 0, y: 1 });
-	}
 }
