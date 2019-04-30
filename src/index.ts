@@ -5,6 +5,7 @@ import { Robot } from './robot';
 import decomp from 'poly-decomp';
 import { RobotController } from './robotController';
 import { Environment, Ball } from './environment';
+import { ClusterCalculator } from './ClusterCalculator';
 (window as any).decomp = decomp;
 
 let simulationEnvironment: Environment;
@@ -61,10 +62,11 @@ function setupRenderer(engine: Engine): Render {
 		}
 	} as any);
 }
+
 function setupEngine() {
-	const engine = Engine.create();
-	engine.world.gravity.y = 0;
-	return engine;
+    const engine = Engine.create();
+    engine.world.gravity.y = 0;
+    return engine;
 }
 
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
@@ -75,6 +77,7 @@ function spawnRobots(startX: number, startY: number, h: number, w: number, count
 	simulationEnvironment.robots.forEach(x => x.update());
 }
 
+
 function createBalls(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y] = [Math.random() * w + startX, Math.random() * h + startY];
@@ -83,14 +86,23 @@ function createBalls(startX: number, startY: number, h: number, w: number, count
 
 }
 
-
-
-
 World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
 
+const calculator = new ClusterCalculator();
+
+let clusters = calculator.calculate(simulationEnvironment.balls);
+let frameCounter = 0;
+
 (function run() {
-	window.requestAnimationFrame(run);
+    window.requestAnimationFrame(run);
 
 	Engine.update(simulationEnvironment.engine, 1000 / 60);
+
+    if ((frameCounter % 32) === 0) {
+        clusters = calculator.calculate(simulationEnvironment.balls);
+    }
+
 	Render.world(simulationEnvironment.renderer);
+    calculator.drawBBs(simulationEnvironment.engine.world,simulationEnvironment.balls, clusters);
+    frameCounter++;
 })();
