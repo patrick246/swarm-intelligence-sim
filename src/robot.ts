@@ -1,7 +1,7 @@
 import { RobotController } from "./robotController";
 
 export class Robot {
-	constructor(private readonly controller: RobotController) {
+	constructor(public readonly controller: RobotController) {
 		{
 
 		}

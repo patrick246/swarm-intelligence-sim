@@ -1,26 +1,57 @@
 
-import { Engine, Render, World, Bodies, Body, Vertices } from 'matter-js';
+import { Engine, Render, World, Bodies, Body, Vertices, Events, Vector } from 'matter-js';
 import { Robot } from './robot';
 
 import decomp from 'poly-decomp';
 import { RobotController } from './robotController';
-import { Environment } from './environment';
+import { Environment, Ball } from './environment';
 (window as any).decomp = decomp;
 
-const robots: Robot[] = [];
-const balls: Body[] = [];
-
-const simulationEnvironment = initSimEnvironment();
-
+let simulationEnvironment: Environment;
+initSimEnvironment();
 spawnRobots(10, 10, 500, 500, 5);
 createBalls(10, 10, 500, 500, 20);
-
-function initSimEnvironment(): Environment {
+console.log(simulationEnvironment);
+function initSimEnvironment() {
 	const engine = setupEngine();
 	const render = setupRenderer(engine);
-	return { renderer: render, engine };
+	simulationEnvironment = { renderer: render, engine, robots: <Robot[]>[], balls: <Ball[]>[] };
+	const collisionHandling = function (event: any) {
+		const pushDistance = 5;
+		const minPushDistance = 3;
+		for (let z = 0; z < event.pairs.length; z++) {
+			let bodies = [];
+			if (event.pairs[z].bodyA.label === RobotController.Label) { bodies.push(event.pairs[z].bodyA.parent); }
+			if (event.pairs[z].bodyB.label === RobotController.Label) { bodies.push(event.pairs[z].bodyB.parent); }
+			if (bodies.length === 0) { return; }
+			// two robots colliding
+			if (bodies.length > 1) {
+				for (let idx = 1; bodies.length > 1 && idx < bodies.length; idx++) {
+					let pos1 = bodies[idx - 1].position;
+					let pos2 = bodies[idx].position;
+					let direction = { x: pos1.x - pos2.x, y: pos1.y - pos2.y };
+					let absVal = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+					let relDirection = { x: direction.x / absVal, y: direction.y / absVal };
+					Body.setPosition(bodies[idx - 1], { x: pos1.x + relDirection.x, y: pos1.y + relDirection.y });
+					Body.setPosition(bodies[idx], { x: pos2.x - relDirection.x, y: pos2.y - relDirection.y });
+				}
+			}
+
+			//treating dot collisions
+			else if (bodies.length == 1) {
+				//console.log('object collision');
+				return;
+			}
+
+			const robots = bodies.map(robotBody => simulationEnvironment.robots.find(robot => robot.controller.body === robotBody));
+			robots.forEach(robot => robot.controller.handleCollision());
+
+		}
+	};
+	Events.on(engine, 'collisionStart', collisionHandling);
+	Events.on(engine, 'collisionActive', collisionHandling);
 }
-function setupRenderer(engine: Engine) :Render{
+function setupRenderer(engine: Engine): Render {
 	return Render.create({
 		element: document.body,
 		engine: engine,
@@ -39,15 +70,15 @@ function setupEngine() {
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y, rot] = [Math.random() * w + startX, Math.random() * h + startY, Math.random() * 360];
-		robots.push(new Robot(new RobotController(x, y, rot, simulationEnvironment)));
+		simulationEnvironment.robots.push(new Robot(new RobotController(x, y, rot, simulationEnvironment)));
 	}
-	robots.forEach(x => x.update());
+	simulationEnvironment.robots.forEach(x => x.update());
 }
 
 function createBalls(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y] = [Math.random() * w + startX, Math.random() * h + startY];
-		balls.push(Bodies.circle(x, y, 10));
+		simulationEnvironment.balls.push(Bodies.circle(x, y, 10));
 	}
 
 }
@@ -55,7 +86,7 @@ function createBalls(startX: number, startY: number, h: number, w: number, count
 
 
 
-World.add(simulationEnvironment.engine.world, balls);
+World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
 
 (function run() {
 	window.requestAnimationFrame(run);
