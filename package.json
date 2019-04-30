@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/patrick246/swarm-intelligence-sim#readme",
   "dependencies": {
+    "hierarchical-clustering": "^1.1.0",
     "matter-js": "^0.14.2",
     "poly-decomp": "^0.3.0"
   },
