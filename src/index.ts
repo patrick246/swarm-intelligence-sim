@@ -40,10 +40,10 @@ function initSimEnvironment() {
 
 			//treating dot collisions
 			else if (bodies.length == 1) {
-				//console.log('object collision');
+				bodies.map(x => Body.setAngularVelocity(x, 0));
 				return;
 			}
-
+			bodies.map(x => Body.setAngularVelocity(x, 0));
 			const robots = bodies.map(robotBody => simulationEnvironment.robots.find(robot => robot.controller.body === robotBody));
 			robots.forEach(robot => robot.controller.handleCollision());
 
@@ -64,9 +64,9 @@ function setupRenderer(engine: Engine): Render {
 }
 
 function setupEngine() {
-    const engine = Engine.create();
-    engine.world.gravity.y = 0;
-    return engine;
+	const engine = Engine.create();
+	engine.world.gravity.y = 0;
+	return engine;
 }
 
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
@@ -94,15 +94,15 @@ let clusters = calculator.calculate(simulationEnvironment.balls);
 let frameCounter = 0;
 
 (function run() {
-    window.requestAnimationFrame(run);
+	window.requestAnimationFrame(run);
 
 	Engine.update(simulationEnvironment.engine, 1000 / 60);
-
-    if ((frameCounter % 32) === 0) {
-        clusters = calculator.calculate(simulationEnvironment.balls);
-    }
+	simulationEnvironment.robots.forEach(robot => robot.controller.Update());
+	if ((frameCounter % 32) === 0) {
+		clusters = calculator.calculate(simulationEnvironment.balls);
+	}
 
 	Render.world(simulationEnvironment.renderer);
-    calculator.drawBBs(simulationEnvironment.engine.world,simulationEnvironment.balls, clusters);
-    frameCounter++;
+	calculator.drawBBs(simulationEnvironment.engine.world, simulationEnvironment.balls, clusters);
+	frameCounter++;
 })();

@@ -8,7 +8,7 @@ export class Robot {
 	}
 
 	update() {
-		this.controller.moveForward();
+		this.controller.move(30).then(()=>console.log('arrived'));
 	}
 
 
