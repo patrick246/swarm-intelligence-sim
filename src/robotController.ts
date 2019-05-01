@@ -5,7 +5,7 @@ export class RobotController {
     public static Label = 'robot';
     public readonly body: Body;
     // To be adjusted.
-    private readonly angleOffset = Math.PI * 0.5;
+    private readonly angleOffset = Math.PI * 1.5;
     private updateFunction: () => void;
     private rejectFunction: (reason: any) => void;
     constructor(x: number, y: number, rot: number, private readonly environment: Environment) {
@@ -45,38 +45,40 @@ export class RobotController {
     public moveToPosition(targetX: number, targetY: number) {
         return new Promise((resolve, reject) => {
             const targetPosition = { x: targetX, y: targetY };
-            const Movespeed = 3;
+            const Movespeed = 10;
+            const target = Bodies.circle(targetX, targetY, 5, {
+                isSensor: true,
+                render: {
+                    fillStyle: 'red'
+                }
+            });
+            World.add(this.environment.engine.world, target);
             this.updateFunction = () => {
-                const targetAngle = this.getAngle(this.body.position, targetX, targetY);
-                Body.setAngle(this.body, targetAngle);
+                const targetAngle = this.angleOffset + this.getAngle(this.body.position, targetX, targetY);
                 const remainingDistance = Math.sqrt(
                     (this.body.position.x - targetPosition.x) * (this.body.position.x - targetPosition.x) +
                     (this.body.position.y - targetPosition.y) * (this.body.position.y - targetPosition.y));
-                console.log(remainingDistance);
                 if (Movespeed > remainingDistance) {
-                    console.log('arrived');
                     Body.setVelocity(this.body, { x: 0, y: 0 });
                     Body.setPosition(this.body, targetPosition);
                     this.rejectFunction = undefined;
                     this.updateFunction = undefined;
+                    World.remove(this.environment.engine.world, target);
                     resolve();
                     return;
                 }
+                Body.setAngle(this.body, targetAngle);
                 Body.setVelocity(this.body,
                     {
-                        x: Movespeed * Math.cos((this.body.angle + this.angleOffset)),
-                        y: Movespeed * Math.sin((this.body.angle + this.angleOffset))
+                        x: Movespeed * Math.cos((targetAngle - this.angleOffset)),
+                        y: Movespeed * Math.sin((targetAngle - this.angleOffset))
                     });
-            }
+                this.rejectFunction = reject;
+            };
         });
     }
     public getAngle(target: Vector, x: number, y: number) {
-        let angle = (Math.atan2(target.y - y, target.x - x));
-
-        if (angle < 0) {
-            angle += 360;
-        }
-
+        let angle = (Math.atan2(y - target.y, x - target.x));
         return angle;
     }
     public move(distance: number) {
@@ -91,7 +93,6 @@ export class RobotController {
                 const remainingDistance = Math.sqrt(
                     (this.body.position.x - targetPosition.x) * (this.body.position.x - targetPosition.x) +
                     (this.body.position.y - targetPosition.y) * (this.body.position.y - targetPosition.y));
-                console.log(remainingDistance);
                 if (Movespeed > remainingDistance) {
                     console.log('arrived');
                     Body.setVelocity(this.body, { x: 0, y: 0 });
@@ -103,14 +104,14 @@ export class RobotController {
                 }
                 Body.setVelocity(this.body,
                     {
-                        x: Movespeed * Math.cos((this.body.angle + this.angleOffset)),
-                        y: Movespeed * Math.sin((this.body.angle + this.angleOffset))
+                        x: Movespeed * Math.cos((this.body.angle)),
+                        y: Movespeed * Math.sin((this.body.angle))
                     });
             };
             Body.setVelocity(this.body,
                 {
-                    x: Movespeed * Math.cos((this.body.angle + this.angleOffset)),
-                    y: Movespeed * Math.sin((this.body.angle + this.angleOffset))
+                    x: Movespeed * Math.cos((this.body.angle)),
+                    y: Movespeed * Math.sin((this.body.angle))
                 });
         });
     }

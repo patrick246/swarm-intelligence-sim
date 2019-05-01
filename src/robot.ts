@@ -8,7 +8,9 @@ export class Robot {
 	}
 
 	update() {
-		this.controller.moveToPosition(Math.random() * 500 + 10, Math.random() * 500 + 10).then(() => console.log('arrived'));
+		let pos = { x: Math.random() * 500, y: Math.random() * 500 };
+		console.log(pos);
+		this.controller.moveToPosition(pos.x, pos.y).then(() => this.update());
 	}
 
 
