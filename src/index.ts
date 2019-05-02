@@ -7,13 +7,14 @@ import { RobotController } from './robotController';
 import { Environment, Ball } from './environment';
 import { ClusterCalculator } from './ClusterCalculator';
 import './debugOptions';
+import { ClusterResult } from './ClusterResult';
 (window as any).decomp = decomp;
 
 export let simulationEnvironment: Environment;
 initSimEnvironment();
 spawnRobots(10, 10, 500, 500, 1);
 console.log(simulationEnvironment.robots[0]);
-createBalls(10, 10, 500, 500, 10);
+createBalls(100, 100, 600, 400, 20);
 World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
 
 console.log(simulationEnvironment);
@@ -21,6 +22,7 @@ function initSimEnvironment() {
 	const engine = setupEngine();
 	const render = setupRenderer(engine);
 	const mouse = Mouse.create(render.canvas);
+	const calculator = new ClusterCalculator();
 	const mouseConstraint = MouseConstraint.create(engine, {
 		mouse,
 		constraint: {
@@ -33,6 +35,8 @@ function initSimEnvironment() {
 	simulationEnvironment = {
 		mouse,
 		mouseConstraint,
+		calculator,
+		clusters: { clusters: [], from: 0, linkage: 0, to: 0 } as ClusterResult,
 		renderer: render,
 		engine,
 		robots: <Robot[]>[],
@@ -40,7 +44,7 @@ function initSimEnvironment() {
 		debugOptions: {
 			showWaypoints: false,
 			showMouse: false,
-			showTarget: false,
+			showTarget: true,
 			showWireframe: false
 		}
 	};
@@ -96,7 +100,9 @@ function setupEngine() {
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y, rot] = [Math.random() * w + startX, Math.random() * h + startY, Math.random() * 360];
-		simulationEnvironment.robots.push(new Robot(new RobotController(x, y, rot, simulationEnvironment)));
+		simulationEnvironment.robots.push(
+			new Robot(new RobotController(x, y, rot, simulationEnvironment),
+				() => simulationEnvironment.clusters));
 	}
 	simulationEnvironment.robots.forEach(x => x.update());
 }
@@ -111,22 +117,19 @@ function createBalls(startX: number, startY: number, h: number, w: number, count
 	}
 }
 
-const calculator = new ClusterCalculator();
-let clusters = calculator.calculate(simulationEnvironment.balls);
-let frameCounter = 0;
 
+simulationEnvironment.clusters = simulationEnvironment.calculator.calculate(simulationEnvironment.balls);
+let frameCounter = 0;
+simulationEnvironment.robots.forEach(robot => robot.update());
 
 (function run() {
-
 	window.requestAnimationFrame(run);
-
-	Engine.update(simulationEnvironment.engine, 1000 / 30);
 	simulationEnvironment.robots.forEach(robot => robot.controller.Update());
+	Engine.update(simulationEnvironment.engine, 1000 / 30);
 	if ((frameCounter % 32) === 0) {
-		clusters = calculator.calculate(simulationEnvironment.balls);
+		simulationEnvironment.clusters = simulationEnvironment.calculator.calculate(simulationEnvironment.balls);
 	}
-
 	Render.world(simulationEnvironment.renderer);
-	calculator.drawBBs(simulationEnvironment.engine.world, simulationEnvironment.balls, clusters);
+	simulationEnvironment.calculator.drawBBs(simulationEnvironment.engine.world, simulationEnvironment.balls, simulationEnvironment.clusters);
 	frameCounter++;
 })();

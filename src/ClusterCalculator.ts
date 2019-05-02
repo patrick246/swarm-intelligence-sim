@@ -1,9 +1,10 @@
-import {Body, World} from 'matter-js';
+import { Body, World } from 'matter-js';
 import Cluster from 'hierarchical-clustering';
+import { ClusterResult } from './ClusterResult';
 
 export class ClusterCalculator {
 
-    public calculate(balls: Body[]) {
+    public calculate(balls: Body[]): ClusterResult {
         const levels = Cluster({
             input: balls,
             distance: distance,
@@ -15,14 +16,12 @@ export class ClusterCalculator {
     }
 
     public drawBBs(world: World, balls: Body[], clusters: any) {
-        //console.log(balls);
-        //console.log(clusters);
         const canvas: HTMLCanvasElement = document.getElementsByTagName('canvas')[0];
         const context = canvas.getContext("2d");
 
         context.strokeStyle = 'green';
 
-        for(let elem of clusters.clusters) {
+        for (let elem of clusters.clusters) {
             const currentBalls = elem.map(i => balls[i]);
             const minX = Math.min.apply(null, currentBalls.map(b => b.position.x));
             const minY = Math.min.apply(null, currentBalls.map(b => b.position.y));

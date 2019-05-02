@@ -1,5 +1,7 @@
 import { Engine, Render, Body, Mouse, MouseConstraint } from "matter-js";
 import { Robot } from "./robot";
+import { ClusterCalculator } from "./ClusterCalculator";
+import { ClusterResult } from "./ClusterResult";
 
 export interface Environment {
     mouse: Mouse,
@@ -8,13 +10,15 @@ export interface Environment {
     robots: Robot[],
     balls: Ball[],
     mouseConstraint: MouseConstraint,
+    calculator: ClusterCalculator,
     debugOptions: DebugOptions,
+    clusters: ClusterResult
 }
 export interface DebugOptions {
     showWaypoints: Boolean,
     showMouse: Boolean,
     showTarget: Boolean,
-    showWireframe:Boolean
+    showWireframe: Boolean
 }
 export type Ball = Body;
 
