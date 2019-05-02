@@ -6,6 +6,7 @@ import decomp from 'poly-decomp';
 import { RobotController } from './robotController';
 import { Environment, Ball } from './environment';
 import { ClusterCalculator } from './ClusterCalculator';
+import './debugOptions';
 (window as any).decomp = decomp;
 
 export let simulationEnvironment: Environment;
