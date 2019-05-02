@@ -8,7 +8,7 @@ import { Environment, Ball } from './environment';
 import { ClusterCalculator } from './ClusterCalculator';
 (window as any).decomp = decomp;
 
-let simulationEnvironment: Environment;
+export let simulationEnvironment: Environment;
 initSimEnvironment();
 spawnRobots(10, 10, 500, 500, 1);
 console.log(simulationEnvironment.robots[0]);
@@ -113,30 +113,7 @@ function createBalls(startX: number, startY: number, h: number, w: number, count
 const calculator = new ClusterCalculator();
 let clusters = calculator.calculate(simulationEnvironment.balls);
 let frameCounter = 0;
-document.onkeypress = (e: KeyboardEvent) => {
-	const input = e.key.toLowerCase();
-	if (input === 'a') {
-		simulationEnvironment.debugOptions.showWaypoints = !simulationEnvironment.debugOptions.showWaypoints;
-	}
-	if (input === 's') {
-		simulationEnvironment.debugOptions.showMouse = !simulationEnvironment.debugOptions.showMouse;
-		if (simulationEnvironment.debugOptions.showMouse) {
-			World.add(simulationEnvironment.engine.world, simulationEnvironment.mouseConstraint);
-		}
-		else {
-			World.remove(simulationEnvironment.engine.world, simulationEnvironment.mouseConstraint as any);
-		}
-	}
-	if (input === 'd') {
-		simulationEnvironment.debugOptions.showTarget = !simulationEnvironment.debugOptions.showTarget;
-	}
-	if (input === 'f') {
-		simulationEnvironment.renderer.options.wireframes =
-			simulationEnvironment.debugOptions.showWaypoints = !simulationEnvironment.debugOptions.showWaypoints;
 
-	}
-
-};
 
 (function run() {
 
