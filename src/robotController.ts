@@ -45,7 +45,7 @@ export class RobotController {
     public moveToPosition(targetX: number, targetY: number) {
         return new Promise((resolve, reject) => {
             const targetPosition = { x: targetX, y: targetY };
-            const Movespeed = 10;
+            const Movespeed = 5;
             const target = Bodies.circle(targetX, targetY, 5, {
                 isSensor: true,
                 render: {
@@ -82,37 +82,8 @@ export class RobotController {
         return angle;
     }
     public move(distance: number) {
-        return new Promise((resolve, reject) => {
-            this.rejectFunction = reject;
-            const Movespeed = 2;
-            let targetPosition = {
-                x: this.body.position.x + Math.cos(this.body.angle + this.angleOffset) * distance,
-                y: this.body.position.y + Math.sin(this.body.angle + this.angleOffset) * distance
-            };
-            this.updateFunction = () => {
-                const remainingDistance = Math.sqrt(
-                    (this.body.position.x - targetPosition.x) * (this.body.position.x - targetPosition.x) +
-                    (this.body.position.y - targetPosition.y) * (this.body.position.y - targetPosition.y));
-                if (Movespeed > remainingDistance) {
-                    console.log('arrived');
-                    Body.setVelocity(this.body, { x: 0, y: 0 });
-                    Body.setPosition(this.body, targetPosition);
-                    this.rejectFunction = undefined;
-                    this.updateFunction = undefined;
-                    resolve();
-                    return;
-                }
-                Body.setVelocity(this.body,
-                    {
-                        x: Movespeed * Math.cos((this.body.angle)),
-                        y: Movespeed * Math.sin((this.body.angle))
-                    });
-            };
-            Body.setVelocity(this.body,
-                {
-                    x: Movespeed * Math.cos((this.body.angle)),
-                    y: Movespeed * Math.sin((this.body.angle))
-                });
-        });
+        const x = this.body.position.x + distance * Math.cos(this.body.angle - this.angleOffset);
+        const y = this.body.position.y + distance * Math.sin(this.body.angle - this.angleOffset);
+        return this.moveToPosition(x, y);
     }
 }
