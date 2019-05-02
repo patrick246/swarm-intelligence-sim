@@ -41,18 +41,72 @@ export class RobotController {
             resolve();
         });
     }
+    public moveAroundBoxToPosition(targetX: number, targetY: number, height: number, width: number): Promise<any> {
+
+        const lastPoint = {
+            x: targetX,
+            y: targetY
+        } as Vector;
+
+        const targetAngle = this.getAngle(this.body.position, targetX, targetY);
+        const sqSize = Math.sqrt(height * height + width * width);
+
+        const directionalOffset = {
+            x: 2 * sqSize * Math.cos(targetAngle),
+            y: 2 * sqSize * Math.sin(targetAngle),
+        } as Vector;
+        const leftOffset = Vector.rotate(directionalOffset, Math.PI / 2);
+
+        const firstPoint = Vector.sub(lastPoint, directionalOffset);
+        const secondPoint = Vector.add(firstPoint, leftOffset);
+        const thirdPoint = Vector.add(secondPoint, directionalOffset);
+
+        const returnValue = this.moveToPosition(firstPoint.x, firstPoint.y)
+            .then(() => this.moveToPosition(secondPoint.x, secondPoint.y))
+            .then(() => this.moveToPosition(thirdPoint.x, thirdPoint.y))
+            .then(() => this.moveToPosition(lastPoint.x, lastPoint.y));
+
+        if (this.environment.debugOptions.showWaypoints) {
+            const waypoints = [this.body.position, firstPoint, secondPoint, thirdPoint, lastPoint]
+                .map(dot => Bodies.circle(dot.x, dot.y, 3, {
+                    isSensor: true,
+                    render: {
+                        fillStyle: 'red'
+                    }
+                }));
+            waypoints.forEach(body => World.add(this.environment.engine.world, body));
+            return returnValue.then(() => waypoints.forEach(body => World.remove(this.environment.engine.world, body)));
+        }
+        return returnValue;
+    }
 
     public moveToPosition(targetX: number, targetY: number) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolveFunction, rejectFunction) => {
             const targetPosition = { x: targetX, y: targetY };
             const Movespeed = 5;
-            const target = Bodies.circle(targetX, targetY, 5, {
-                isSensor: true,
-                render: {
-                    fillStyle: 'red'
+
+            let reject = rejectFunction;
+            let resolve = resolveFunction;
+
+            if (this.environment.debugOptions.showTarget) {
+                const target = Bodies.circle(targetX, targetY, 5, {
+                    isSensor: true,
+                    render: {
+                        fillStyle: 'green'
+                    }
+                });
+
+                World.add(this.environment.engine.world, target);
+                reject = () => {
+                    World.remove(this.environment.engine.world, target);
+                    rejectFunction();
                 }
-            });
-            World.add(this.environment.engine.world, target);
+                resolve = () => {
+                    World.remove(this.environment.engine.world, target);
+                    resolveFunction();
+                }
+            }
+            this.rejectFunction = reject;
             this.updateFunction = () => {
                 const targetAngle = this.angleOffset + this.getAngle(this.body.position, targetX, targetY);
                 const remainingDistance = Math.sqrt(
@@ -63,7 +117,6 @@ export class RobotController {
                     Body.setPosition(this.body, targetPosition);
                     this.rejectFunction = undefined;
                     this.updateFunction = undefined;
-                    World.remove(this.environment.engine.world, target);
                     resolve();
                     return;
                 }
@@ -73,7 +126,6 @@ export class RobotController {
                         x: Movespeed * Math.cos((targetAngle - this.angleOffset)),
                         y: Movespeed * Math.sin((targetAngle - this.angleOffset))
                     });
-                this.rejectFunction = reject;
             };
         });
     }

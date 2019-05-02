@@ -7,11 +7,16 @@ export class Robot {
 		}
 	}
 
+	private positions = [
+		{ x: 100, y: 100 },
+		{ x: 400, y: 100 },
+		{ x: 400, y: 400 },
+		{ x: 100, y: 400 },
+		{ x: 300, y: 300 },
+	];
+	private idx = 0;
 	update() {
-		let pos = { x: Math.random() * 500, y: Math.random() * 500 };
-		console.log(pos);
-		this.controller.moveToPosition(pos.x, pos.y).then(() => this.update());
+		let pos = this.positions[(this.idx+=1) % 5];  //{ x: Math.random() * 500, y: Math.random() * 500 };
+		this.controller.moveAroundBoxToPosition(pos.x, pos.y, 20, 20).then(() => this.update());
 	}
-
-
 }

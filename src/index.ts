@@ -1,5 +1,5 @@
 
-import { Engine, Render, World, Bodies, Body, Vertices, Events, Vector } from 'matter-js';
+import { Engine, Render, World, Bodies, Body, Vertices, Events, Vector, Mouse, MouseConstraint } from 'matter-js';
 import { Robot } from './robot';
 
 import decomp from 'poly-decomp';
@@ -10,20 +10,45 @@ import { ClusterCalculator } from './ClusterCalculator';
 
 let simulationEnvironment: Environment;
 initSimEnvironment();
-spawnRobots(10, 10, 500, 500, 5);
-createBalls(10, 10, 500, 500, 20);
+spawnRobots(10, 10, 500, 500, 1);
+console.log(simulationEnvironment.robots[0]);
+createBalls(10, 10, 500, 500, 10);
+World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
+
 console.log(simulationEnvironment);
 function initSimEnvironment() {
 	const engine = setupEngine();
 	const render = setupRenderer(engine);
-	simulationEnvironment = { renderer: render, engine, robots: <Robot[]>[], balls: <Ball[]>[] };
+	const mouse = Mouse.create(render.canvas);
+	const mouseConstraint = MouseConstraint.create(engine, {
+		mouse,
+		constraint: {
+			stiffness: 1,
+			render: {
+				visible: true
+			}
+		}
+	} as any);
+	simulationEnvironment = {
+		mouse,
+		mouseConstraint,
+		renderer: render,
+		engine,
+		robots: <Robot[]>[],
+		balls: <Ball[]>[],
+		debugOptions: {
+			showWaypoints: false,
+			showMouse: false,
+			showTarget: false,
+			showWireframe: false
+		}
+	};
 	const collisionHandling = function (event: any) {
-		const pushDistance = 5;
-		const minPushDistance = 3;
 		for (let z = 0; z < event.pairs.length; z++) {
 			let bodies = [];
 			if (event.pairs[z].bodyA.label === RobotController.Label) { bodies.push(event.pairs[z].bodyA.parent); }
 			if (event.pairs[z].bodyB.label === RobotController.Label) { bodies.push(event.pairs[z].bodyB.parent); }
+			bodies.map(x => Body.setAngularVelocity(x, 0));
 			if (bodies.length === 0) { return; }
 			// two robots colliding
 			if (bodies.length > 1) {
@@ -40,10 +65,8 @@ function initSimEnvironment() {
 
 			//treating dot collisions
 			else if (bodies.length == 1) {
-				bodies.map(x => Body.setAngularVelocity(x, 0));
 				return;
 			}
-			bodies.map(x => Body.setAngularVelocity(x, 0));
 			const robots = bodies.map(robotBody => simulationEnvironment.robots.find(robot => robot.controller.body === robotBody));
 			robots.forEach(robot => robot.controller.handleCollision());
 
@@ -58,7 +81,7 @@ function setupRenderer(engine: Engine): Render {
 		engine: engine,
 		options: {
 			showAngleIndicator: true,
-			wireframes: false,
+			wireframes: true,
 		}
 	} as any);
 }
@@ -77,26 +100,49 @@ function spawnRobots(startX: number, startY: number, h: number, w: number, count
 	simulationEnvironment.robots.forEach(x => x.update());
 }
 
-
 function createBalls(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y] = [Math.random() * w + startX, Math.random() * h + startY];
-		simulationEnvironment.balls.push(Bodies.circle(x, y, 10));
+		simulationEnvironment.balls.push(Bodies.circle(x, y, 10, {
+			frictionAir: 0.5,
+			frictionStatic: 1
+		}));
 	}
-
 }
 
-World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
-
 const calculator = new ClusterCalculator();
-
 let clusters = calculator.calculate(simulationEnvironment.balls);
 let frameCounter = 0;
+document.onkeypress = (e: KeyboardEvent) => {
+	const input = e.key.toLowerCase();
+	if (input === 'a') {
+		simulationEnvironment.debugOptions.showWaypoints = !simulationEnvironment.debugOptions.showWaypoints;
+	}
+	if (input === 's') {
+		simulationEnvironment.debugOptions.showMouse = !simulationEnvironment.debugOptions.showMouse;
+		if (simulationEnvironment.debugOptions.showMouse) {
+			World.add(simulationEnvironment.engine.world, simulationEnvironment.mouseConstraint);
+		}
+		else {
+			World.remove(simulationEnvironment.engine.world, simulationEnvironment.mouseConstraint as any);
+		}
+	}
+	if (input === 'd') {
+		simulationEnvironment.debugOptions.showTarget = !simulationEnvironment.debugOptions.showTarget;
+	}
+	if (input === 'f') {
+		simulationEnvironment.renderer.options.wireframes =
+			simulationEnvironment.debugOptions.showWaypoints = !simulationEnvironment.debugOptions.showWaypoints;
+
+	}
+
+};
 
 (function run() {
+
 	window.requestAnimationFrame(run);
 
-	Engine.update(simulationEnvironment.engine, 1000 / 60);
+	Engine.update(simulationEnvironment.engine, 1000 / 30);
 	simulationEnvironment.robots.forEach(robot => robot.controller.Update());
 	if ((frameCounter % 32) === 0) {
 		clusters = calculator.calculate(simulationEnvironment.balls);
