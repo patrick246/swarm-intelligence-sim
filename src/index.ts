@@ -8,13 +8,15 @@ import { Environment, Ball } from './environment';
 import { ClusterCalculator } from './ClusterCalculator';
 import './debugOptions';
 import { ClusterResult } from './ClusterResult';
+import { PathFinderStrategy } from './PathFinderStrategy';
+import { SmallestClusterSelector } from './SmallestClusterSelector';
 (window as any).decomp = decomp;
 
 export let simulationEnvironment: Environment;
 initSimEnvironment();
 spawnRobots(10, 10, 500, 500, 1);
 console.log(simulationEnvironment.robots[0]);
-createBalls(100, 100, 600, 400, 20);
+createBalls(100, 100,400, 500, 20);
 World.add(simulationEnvironment.engine.world, simulationEnvironment.balls);
 
 console.log(simulationEnvironment);
@@ -98,10 +100,14 @@ function setupEngine() {
 }
 
 function spawnRobots(startX: number, startY: number, h: number, w: number, count: number) {
+	const getClusters = () => simulationEnvironment.clusters;
 	for (let i = 0; i < count; i++) {
 		const [x, y, rot] = [Math.random() * w + startX, Math.random() * h + startY, Math.random() * 360];
+		const robotController = new RobotController(x, y, rot, simulationEnvironment);
 		simulationEnvironment.robots.push(
-			new Robot(new RobotController(x, y, rot, simulationEnvironment),
+			new Robot(robotController,
+				new PathFinderStrategy(simulationEnvironment, getClusters, robotController),
+				new SmallestClusterSelector(),
 				() => simulationEnvironment.clusters));
 	}
 	simulationEnvironment.robots.forEach(x => x.update());
@@ -110,8 +116,8 @@ function spawnRobots(startX: number, startY: number, h: number, w: number, count
 function createBalls(startX: number, startY: number, h: number, w: number, count: number) {
 	for (let i = 0; i < count; i++) {
 		const [x, y] = [Math.random() * w + startX, Math.random() * h + startY];
-		simulationEnvironment.balls.push(Bodies.circle(x, y, 10, {
-			frictionAir: 0.5,
+		simulationEnvironment.balls.push(Bodies.circle(x, y, 5, {
+			frictionAir: 0.9,
 			frictionStatic: 1
 		}));
 	}
@@ -125,7 +131,7 @@ simulationEnvironment.robots.forEach(robot => robot.update());
 (function run() {
 	window.requestAnimationFrame(run);
 	simulationEnvironment.robots.forEach(robot => robot.controller.Update());
-	Engine.update(simulationEnvironment.engine, 1000 / 30);
+	Engine.update(simulationEnvironment.engine, 1000 / 60);
 	if ((frameCounter % 32) === 0) {
 		simulationEnvironment.clusters = simulationEnvironment.calculator.calculate(simulationEnvironment.balls);
 	}
