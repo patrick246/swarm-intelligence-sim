@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@types/matter-js": "^0.10.2",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "ts-loader": "^5.4.4",
     "typescript": "^3.4.5",
     "webpack": "^4.30.0",
